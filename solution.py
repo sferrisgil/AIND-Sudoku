@@ -1,3 +1,6 @@
+#from collections import Counter
+# We need the method Counter from the collecitons packahge to easily count the
+# number of times that a posible twin appears in the associated units
 # some initialitation of variables
 assignments = []
 rows = 'ABCDEFGHI'
@@ -21,23 +24,26 @@ def naked_twins(values):
     Returns:
         the values dictionary with the naked twins eliminated from peers.
     """
-    for unit in unitlist:  #We loop through all the units including the two new diagonal ones
-    # We need to create  a sub-dictionary for each unit to change the values
-    # of the original boxes because eliminating direclty changes the indexes
-        unit_copy = dict((z, values[z]) for z in unit) 
-        counter={} # Initialite a counter, to write down the number of instances that all the values appear in each unit
-        for y in unit_copy.values():
-            if  not y in counter: counter[y]=1
-            else:  counter[y]+=1
-            twins_values = [c for c in counter if counter[c] == 2 and len(c) == 2] 
-            #the list of twins values of twins in current unit
-            if len(twins_values) > 0: #thre is some posssible twin left
-                for t in twins_values: # loop through all possible twins
-                    for u in unit_copy:
-                        if unit_copy[u] != t:
-                            assign_value(values, u, values[u].replace(t[0], '')) #eliminating the first digit of twins from all unit peers
-                            assign_value(values, u, values[u].replace(t[1], '')) #eliminating the second digit of twins from all unit peers
-    return values  
+    for unit in unitlist:   
+    # We need to create  a sub-dictionary of the values for each unit to change them without affecting the original values
+    # of the boxes because of the way Python appoints to the lists and dictionaries while in the loops.
+        cunit = dict((z, values[z]) for z in unit)
+        counter={} # Initialite a counter as a dictionary, to write down the number of instances that each value appears in the unit
+        for y in cunit.values():
+            if  not y in counter: counter[y]=1 #the first time always have the value 'one'
+            else:  counter[y]+=1 # if we found more values we increment the counter
+            twins_values = [c for c in counter if len(c) == 2 and counter[c] == 2]
+            # The previous line prevents from taking into account 'triplets' and other rare cases
+            # We have built the list of twins values in current unit.Let's discard the substrings containing each of the digits of the twins values
+            if len(twins_values) > 0: #We have twins in the unit
+                for t in twins_values: # loop through all possible twins (normally one, but theretically maybe more)
+                    for u in cunit:
+                        if cunit[u] != t: #this assures not to delete the real twin
+                            assign_value(values, u, values[u].replace(t[0], '')) #eliminating the first digit of twins from the current unit
+                            assign_value(values, u, values[u].replace(t[1], '')) #eliminating the second digit of twins from the current unit
+                            # If the rest of unit's boxes don't contain any of the digits of the twin, replace method leave their values unaltered               
+    return values
+
 
 def cross(a, b):
     "Cross product of elements in A and elements in B."
@@ -141,6 +147,7 @@ def reduce_puzzle(values):
             print("This Sudoku has no solution")
             return False
     return values
+
 def search(values):
     values = reduce_puzzle(values)
     print ('type(reduce_puzzle(values)) ', type(reduce_puzzle(values)))
